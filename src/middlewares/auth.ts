@@ -61,3 +61,15 @@ export const authBearerToken = async (
     return res.status(401).send({ error: "Authentication Failed" });
   }
 };
+
+export const localVariables = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  req.app.locals = {
+    OTP: null,
+    resetSession: false,
+  };
+  next();
+};
