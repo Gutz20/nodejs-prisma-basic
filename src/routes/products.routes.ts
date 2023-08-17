@@ -1,5 +1,6 @@
 import express from "express";
 import { create, getAll, getById, update } from "../controllers/products";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router = express.Router();
 

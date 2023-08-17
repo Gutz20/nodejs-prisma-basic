@@ -2,10 +2,9 @@ import bcrypt from "bcrypt";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db/db";
-import { MyRequest } from "../schemas/auth.schema";
 import { User } from "@prisma/client";
 
-// Verifica que el usuario exista
+// Verifica que el usuario exista aunque esté es opcional la verdad
 export const verifyUser = async (
   req: Request,
   res: Response,
@@ -25,7 +24,7 @@ export const verifyUser = async (
 
 // Verifica el token de la cookie
 export const verifyToken = async (
-  req: MyRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -40,7 +39,7 @@ export const verifyToken = async (
 };
 
 export const authBearerToken = async (
-  req: MyRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {

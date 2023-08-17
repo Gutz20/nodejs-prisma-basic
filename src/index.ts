@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(morgan("tiny"));
 app.use(
   cors({
-    origin: "http://localhost:5173", // Replace for process.env.FRONTEND_URL
+    origin: `${process.env.FRONTEND_URL}`, // Replace for process.env.FRONTEND_URL
     methods: ["POST", "PUT", "DELETE", "GET", "OPTIONS"],
     credentials: true,
   })

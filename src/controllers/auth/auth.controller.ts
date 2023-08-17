@@ -1,10 +1,9 @@
-import { Request, Response } from "express";
-import { prisma } from "../../db/db";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { createAccessToken } from "../../libs/jwt";
+import { Request, Response } from "express";
 import otpGenerator from "otp-generator";
+import { prisma } from "../../db/db";
 import { sendEmail } from "../../helpers/mailer";
+import { createAccessToken } from "../../libs/jwt";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -18,13 +17,13 @@ export const register = async (req: Request, res: Response) => {
     if (existUsername)
       return res.status(400).json({ error: "Username already in use" });
 
-    // Verify if the email exists
     const existEmail = await prisma.user.findUnique({
       where: {
         email,
       },
     });
 
+    // Verify if the email exists
     if (existEmail)
       return res.status(400).json({ error: "Email already exits" });
 
@@ -34,8 +33,24 @@ export const register = async (req: Request, res: Response) => {
       data: { username: username, email: email, password: passwordHash },
     });
 
+    const tokenCreated = await createAccessToken({ email: newUser.email });
+    const token = await prisma.token.create({
+      data: { userId: newUser.id, token: tokenCreated as string },
+    });
+
+    const message = `${process.env.BASE_URL}/api/auth/verify/${newUser.id}/${token.token}`;
+
+    await sendEmail({
+      username: newUser.username,
+      text: message,
+      to: newUser.email,
+      subject: "Verify email",
+    });
+
     // res.status(201).send(newUser);
-    res.status(201).send({ msg: "User Register Successfull" });
+    res.status(201).send({
+      msg: "User Register Successfull and a email sent to your account",
+    });
   } catch (error) {
     return res.status(500).send({ error: error });
   }
@@ -43,11 +58,11 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     const userFound = await prisma.user.findUnique({
       where: {
-        username,
+        email,
       },
     });
 
@@ -60,25 +75,12 @@ export const login = async (req: Request, res: Response) => {
 
     const token = await createAccessToken({
       id: userFound.id,
-      username: userFound.username,
+      email: userFound.email,
     });
-
-    // Envia el token como cookie
-    // res.cookie("token", token, {
-    //   sameSite: "none",
-    //   secure: true,
-    //   httpOnly: false,
-    // });
-
-    // return res.status(200).json({
-    //   id: userFound.id,
-    //   username: userFound.username,
-    //   email: userFound.email,
-    // });
 
     return res.status(200).send({
       msg: "Login Successful...!",
-      username: userFound?.username,
+      email: userFound?.email,
       token,
     });
   } catch (error) {
@@ -87,8 +89,39 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const registerMail = async (req: Request, res: Response) => {
-  const response = await sendEmail(req.body);
-  res.status(200).send(response);
+  try {
+    console.log("Dentro del registerMail");
+
+    const { id, token } = req.params;
+    const userFound = await prisma.user.findUnique({
+      where: {
+        id: parseInt(id),
+      },
+    });
+
+    if (!userFound) return res.status(400).send("Invalid Link");
+
+    const tokenFound = await prisma.token.findUnique({
+      where: { userId: parseInt(id), token: token },
+    });
+
+    if (!tokenFound) return res.status(400).send("Invalid Link");
+
+    await prisma.user.update({
+      where: {
+        id: parseInt(id),
+      },
+      data: { verified: true },
+    });
+
+    await prisma.token.delete({
+      where: { id: tokenFound.id },
+    });
+
+    res.send("Email verified Sucessfully");
+  } catch (error) {
+    res.status(400).send({ msg: error });
+  }
 };
 
 export const authenticate = async (req: Request, res: Response) => {
@@ -161,4 +194,31 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {};
 
-export const profile = async (req: Request, res: Response) => {};
+export const profile = async (req: Request, res: Response) => {
+  // return res.json({ profile: req.user, message: "Profile data" });
+  try {
+    const userFound = await prisma.user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+      include: {
+        roles: true,
+      },
+    });
+
+    if (!userFound) return res.status(404).json({ message: "User not found" });
+
+    const profileData = {
+      firstName: userFound.firstName,
+      lastName: userFound.lastName,
+      phone: userFound.mobile,
+      email: userFound.email,
+      address: userFound.address,
+      roles: userFound.roles,
+    };
+
+    return res.json({ data: profileData, message: "Profile data" });
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener los datos" });
+  }
+};

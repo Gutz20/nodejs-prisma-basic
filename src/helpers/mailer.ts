@@ -29,13 +29,6 @@ const mailGenerator = new mailgen({
   },
 });
 
-// {
-//   "username": "example123",
-//   "userEmail": "admin123",
-//   "text": "",
-//   "subject": ""
-// }
-
 export const sendEmail = async ({
   username,
   text,
