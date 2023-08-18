@@ -5,15 +5,19 @@ import {
   getById,
   update,
   getByUsername,
+  eliminate,
 } from "../controllers/users";
-import { authBearerToken } from "../middlewares/auth";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router = express.Router();
+
+router.use(requireAuth);
 
 router.get("/", getAll);
 router.get("/:id", getById);
 router.get("/find/:username", getByUsername); // user with username
 router.post("/", create);
-router.put("/:id", authBearerToken, update); // Is use to update the user profile
+router.put("/:id", update); // Is use to update the user profile
+router.delete("/:id", eliminate);
 
 export default router;

@@ -1,4 +1,4 @@
-import "dotenv/config"
+import "dotenv/config";
 import express, { Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -13,11 +13,12 @@ app.use(express.json());
 app.use(morgan("tiny"));
 app.use(
   cors({
-    origin: "*", // Replace for process.env.FRONTEND_URL
+    origin: `${process.env.FRONTEND_URL}`, // Replace for process.env.FRONTEND_URL
     methods: ["POST", "PUT", "DELETE", "GET", "OPTIONS"],
     credentials: true,
   })
 );
+
 app.disable("x-powered-by"); // less hackers know about our stack
 
 // API ROUTES

@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { User } from "@prisma/client";
 import { Request, Response } from "express";
 import { z } from "zod";
@@ -36,15 +36,22 @@ export const loginSchema = z.object({
     }),
 });
 
-export interface MyRequest<
-  ReqBody = any,
-  ReqParams = any,
-  ReqQuery = any,
-  ResBody = any,
-  Locals extends Record<string, any> = any
-> extends Request<ReqParams, ResBody, ReqBody, ReqQuery, Locals> {
-  user?: string | jwt.JwtPayload;
-  cookies: {
-    jwt: string;
-  };
+// This function is a alternative solution to user in req
+export function hasUser(
+  request: Request
+): request is Request & { user: User | string | JwtPayload | undefined } {
+  return "user" in request && typeof request["user"] == "number";
 }
+
+// export interface MyRequest<
+//   ReqBody = any,
+//   ReqParams = any,
+//   ReqQuery = any,
+//   ResBody = any,
+//   Locals extends Record<string, any> = any
+// > extends Request<ReqParams, ResBody, ReqBody, ReqQuery, Locals> {
+//   user?: string | jwt.JwtPayload;
+//   cookies: {
+//     jwt: string;
+//   };
+// }
