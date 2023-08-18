@@ -16,9 +16,9 @@ model Post {
   content String?
   published Boolean @default(false)
 
-  categories CategoriesOnPosts[]
+  tags TagOnPosts[]
 
-  author User @relation(fields: [authorId], references: [id])
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId Int
 
   createdAt DateTime @default(now())
@@ -27,24 +27,20 @@ model Post {
   @@map("posts")
 }
 
-model CategoryPost {
+model Tag {
   id Int @id @default(autoincrement())
   name String @unique
-  posts CategoriesOnPosts[]
+  posts TagOnPosts[]
 
   @@map("categoriesPost")
 }
 
-model CategoriesOnPosts {
-  post Post @relation(fields: [postId], references: [id])
-  postId Int
-  categoryPost CategoryPost @relation(fields: [categoryPostId], references: [id])
-  categoryPostId Int
-  assignedAt DateTime @default(now())
-  assignedBy String
-
-  @@id([postId, categoryPostId])
-  @@map("categories_posts")
+model TagOnPosts {
+  id Int @id @default(autoincrement())
+  post Post? @relation(fields: [postId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  tag Tag? @relation(fields: [tagId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  postId Int?
+  tagId Int?
 }
 
 model Plan {
@@ -91,7 +87,7 @@ model User {
   posts Post[]
   profile Profile?
 
-  roles Rol[]
+  roles RolUser[]
 
   token Token?
 
@@ -104,10 +100,23 @@ model User {
 model Rol {
   id Int @id @default(autoincrement())
   name String @unique
-  users User[]
+  users RolUser[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("roles")
+}
+
+model RolUser {
+  userId Int
+  rolId Int
+  addedAt DateTime? @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  rol Rol @relation(fields: [rolId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([rolId, userId])
+  @@index([userId], name: "userId")
+  @@map("roles_user")
 }

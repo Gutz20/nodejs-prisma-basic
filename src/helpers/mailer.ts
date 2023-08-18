@@ -12,7 +12,7 @@ interface EmailParams {
 }
 
 const tranporter = nodemailer.createTransport({
-  host: "mail.enatelperu.com.pe",
+  host: `${process.env.HOST_MAIL}`, // smtp.gmail.com
   port: 465,
   secure: true,
   auth: {
